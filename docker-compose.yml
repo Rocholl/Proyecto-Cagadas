@@ -1,44 +1,53 @@
+# Monorepo: compose en la raíz del repo. En Dokploy: Compose Path = ./docker-compose.yml
+# Variables en Dokploy (pestaña Environment) → se escriben en .env junto a este archivo.
+# Obligatorias en producción: VITE_BACKEND_URL (URL pública del API, p. ej. https://api.tudominio.com)
+# y FRONTEND_URLS (orígenes CORS del front, p. ej. https://app.tudominio.com).
+
 services:
   mongo:
     image: mongo:7
-    container_name: cagadas-mongo
     restart: unless-stopped
-    ports:
-      - "27017:27017"
+    networks:
+      - internal
     volumes:
       - mongo_data:/data/db
 
   backend:
     build:
       context: ./Cagadas-BackEnd
-    container_name: cagadas-backend
+      dockerfile: Dockerfile
     restart: unless-stopped
     depends_on:
       - mongo
-    ports:
-      - "3000:3000"
     environment:
-      PORT: 3000
+      PORT: "3000"
       MONGODB_URI: mongodb://mongo:27017/cagadas
-      FRONTEND_URLS: http://localhost:5173,http://127.0.0.1:5173
-    volumes:
-      - ./Cagadas-BackEnd:/app
-      - /app/node_modules
+      FRONTEND_URLS: ${FRONTEND_URLS}
+    networks:
+      - internal
+      - dokploy-network
+    ports:
+      - "3000"
 
   frontend:
     build:
       context: ./Cagadas-FrontEnd
-    container_name: cagadas-frontend
+      dockerfile: Dockerfile
+      args:
+        VITE_BACKEND_URL: ${VITE_BACKEND_URL}
     restart: unless-stopped
     depends_on:
       - backend
+    networks:
+      - dokploy-network
     ports:
-      - "5173:5173"
-    environment:
-      VITE_BACKEND_URL: http://localhost:3000
-    volumes:
-      - ./Cagadas-FrontEnd:/app
-      - /app/node_modules
+      - "5173"
 
 volumes:
   mongo_data:
+
+networks:
+  dokploy-network:
+    external: true
+  internal:
+    driver: bridge
