@@ -1,7 +1,6 @@
 # Monorepo: compose en la raíz del repo. En Dokploy: Compose Path = ./docker-compose.yml
 # Variables en Dokploy (pestaña Environment) → se escriben en .env junto a este archivo.
-# Obligatorias en producción: VITE_BACKEND_URL (URL pública del API, p. ej. https://api.tudominio.com)
-# y FRONTEND_URLS (orígenes CORS del front, p. ej. https://app.tudominio.com).
+# Dokploy → Environment: VITE_BACKEND_URL, FRONTEND_URLS, JWT_SECRET (obligatorias).
 
 services:
   mongo:
@@ -23,6 +22,7 @@ services:
       PORT: "3000"
       MONGODB_URI: mongodb://mongo:27017/cagadas
       FRONTEND_URLS: ${FRONTEND_URLS}
+      JWT_SECRET: ${JWT_SECRET}
     networks:
       - internal
       - dokploy-network
